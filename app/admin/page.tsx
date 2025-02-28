@@ -1,71 +1,52 @@
-'use client';
+import StatsCard from '@/app/components/StatsCard';
+import AnalyticsChart from '@/app/components/AnalyticsChart';
+import RecentActivity from '@/app/components/RecentActivity';
+import Sidebar from '@/app/components/Sidebar';
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import CarCard from '../components/CarCard';
-import Link from 'next/link';
-
-interface Car {
-  _id: string;
-  title: string;
-  price: number;
-  description: string;
-  image: string;
-  contactInfo: string;
+async function getStats() {
+  const res = await fetch(`${process.env.NEXTAUTH_URL}/api/stats`);
+  return res.json();
 }
 
-const AdminDashboard = () => {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [cars, setCars] = useState<Car[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (status === 'loading') return; // Wait for session to load
-
-    if (!session) {
-      router.push('/auth/signin'); // Redirect using Next.js router
-      return;
-    }
-
-    const fetchCars = async () => {
-      try {
-        const res = await fetch('/api/cars');
-        if (!res.ok) throw new Error('Failed to fetch cars');
-        const data = await res.json();
-        setCars(data);
-      } catch (err) {
-        setError('Error loading cars. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCars();
-  }, [session, status, router]);
-
-  if (status === 'loading' || loading) return <div>Loading...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+export default async function Dashboard() {
+  const { cars } = await getStats();
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold">Admin Panel</h1>
-      <Link href="/admin/add" className="bg-green-500 text-white p-2 mt-4 inline-block rounded">
-        Add New Car
-      </Link>
-      {cars.length === 0 ? (
-        <p className="mt-4">No cars available.</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-          {cars.map((car) => (
-            <CarCard key={car._id} {...car} />
-          ))}
+    <div className="flex min-h-screen">
+      
+      <main className="flex-1 p-8 bg-gray-50">
+        {/* Stats Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <StatsCard 
+            title="Total Cars" 
+            value={(cars?.available?.count || 0) + (cars?.sold?.count || 0)} 
+          />
+          <StatsCard 
+            title="Available Cars" 
+            value={cars?.available?.count || 0} 
+          />
+          <StatsCard 
+            title="Sold Cars" 
+            value={cars?.sold?.count || 0} 
+          />
+          <StatsCard 
+            title="Pending Cars" 
+            value={cars?.pending?.count || 0} 
+          />
         </div>
-      )}
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <AnalyticsChart data={[]} />
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold mb-4">Price Distribution</h3>
+            {/* Add price range chart here */}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <RecentActivity />
+      </main>
     </div>
   );
-};
-
-export default AdminDashboard;
+}

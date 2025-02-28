@@ -21,7 +21,7 @@ export const authOptions = {
     }),
   ],
   pages: {
-    signIn: "/auth/signin", // Ensure this matches your login page
+    signIn: "api/auth/signin", // Ensure this matches your login page
   },
   secret: process.env.NEXTAUTH_SECRET, // Ensure this is set in your .env file
 };
