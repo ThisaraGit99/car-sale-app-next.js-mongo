@@ -6,14 +6,28 @@ export interface ICar extends Document {
   description: string;
   image: string;
   contactInfo: string;
+  status: string; // Added missing status field
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const CarSchema: Schema = new Schema({
-  title: { type: String, required: true },
-  price: { type: Number, required: true },
-  description: { type: String, required: true },
-  image: { type: String, required: true },
-  contactInfo: { type: String, required: true },
-});
+const CarSchema: Schema = new Schema(
+  {
+    title: { type: String, required: true },
+    price: { type: Number, required: true },
+    description: { type: String, required: true },
+    images: [{ type: String, required: true }], // Array of strings
+    contactInfo: { type: String, required: true },
+    status: {  // Added status field to schema
+      type: String,
+      enum: ['available', 'sold', 'pending'],
+      default: 'available'
+    }
+  },
+  { 
+    timestamps: true 
+  }
+);
 
-export default mongoose.models.Car || mongoose.model<ICar>('Car', CarSchema);
+// Better way to handle existing models
+export default mongoose.models.Car<ICar> || mongoose.model<ICar>('Car', CarSchema);
